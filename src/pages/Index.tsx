@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Activity, Target, Zap, CheckCircle } from "lucide-react";
 import { PDFUpload } from "@/components/PDFUpload";
 import { ManualInput } from "@/components/ManualInput";
@@ -6,12 +6,29 @@ import { FitnessGoalGenerator } from "@/components/FitnessGoalGenerator";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/fitness-hero.jpg";
 import Footer from "@/components/Footer";
+import Cal, { getCalApi } from "@calcom/embed-react";
 
 const Index = () => {
   const [step, setStep] = useState<"input" | "plan">("input");
   const [inputMethod, setInputMethod] = useState<"pdf" | "manual">("pdf");
   const [fitnessData, setFitnessData] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showCal, setShowCal] = useState(false);
+
+  useEffect(() => {
+    (async function () {
+      const cal = await getCalApi({ namespace: "30min" });
+      cal("ui", {
+        theme: "light",
+        cssVarsPerTheme: {
+          light: { "cal-brand": "#209a61" },
+          dark: { "cal-brand": "#209a61" },
+        },
+        hideEventTypeDetails: false,
+        layout: "month_view",
+      });
+    })();
+  }, []);
 
   const handleDataExtracted = (data: any) => {
     setFitnessData(data);
@@ -28,6 +45,28 @@ const Index = () => {
     setFitnessData(null);
     setIsProcessing(false);
   };
+
+  if (showCal) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div style={{ width: "100%", height: "80vh", overflow: "scroll" }}>
+            <Cal
+              namespace="30min"
+              calLink="huzaif-shaikh/30min"
+              style={{ width: "100%", height: "100%", overflow: "scroll" }}
+              config={{ layout: "month_view" }}
+            />
+          </div>
+        </div>
+        <div className="text-center my-8">
+          <Button variant="outline" onClick={() => setShowCal(false)}>
+            Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (step === "plan" && fitnessData) {
     return (
@@ -111,12 +150,15 @@ const Index = () => {
             </p>
           </div>
 
-          <a
-            href="https://your-bmi-service-link.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          <div
             className="block text-primary text-center text-lg sm:text-xl font-semibold hover:underline"
             style={{ textDecoration: "none" }}
+            onClick={() => setShowCal(true)}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => {
+              if (e.key === "Enter" || e.key === " ") setShowCal(true);
+            }}
           >
             <div
               className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2 mb-8 mx-auto bg-primary/10 border-2 border border-primary rounded-lg p-4 sm:p-6 shadow-lg transition-transform duration-200 hover:scale-105 cursor-pointer"
@@ -132,7 +174,7 @@ const Index = () => {
                 only
               </span>
             </div>
-          </a>
+          </div>
 
           <div className="flex justify-center gap-4 mb-8">
             <Button
