@@ -5,6 +5,7 @@ import { ManualInput } from "@/components/ManualInput";
 import { FitnessGoalGenerator } from "@/components/FitnessGoalGenerator";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/fitness-hero.jpg";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const [step, setStep] = useState<"input" | "plan">("input");
@@ -53,14 +54,22 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="relative bg-gradient-hero text-white overflow-hidden">
-        <div className="absolute inset-0">
+      <div className="relative w-full bg-gradient-hero text-white overflow-hidden">
+        <div className="absolute inset-0 w-full h-full">
           <img
             src={heroImage}
             alt="Fitness and health activities"
-            className="w-full h-full object-cover opacity-20"
+            className="w-full h-full object-cover object-center opacity-20"
+            style={{
+              minWidth: "100vw",
+              left: "50%",
+              transform: "translateX(-50%)",
+              position: "absolute",
+              top: 0,
+              height: "100%",
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-hero/80"></div>
+          <div className="absolute inset-0 w-full h-full bg-gradient-hero/80"></div>
         </div>
 
         <div className="relative container mx-auto px-4 py-20">
@@ -175,6 +184,7 @@ const Index = () => {
           )} */}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

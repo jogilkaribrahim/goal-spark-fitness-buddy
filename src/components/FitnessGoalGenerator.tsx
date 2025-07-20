@@ -7,6 +7,7 @@ import {
   TrendingUp,
   BicepsFlexed,
 } from "lucide-react";
+import Footer from "./Footer";
 
 interface FitnessData {
   height: number;
@@ -282,169 +283,180 @@ export const FitnessGoalGenerator: React.FC<FitnessGoalGeneratorProps> = ({
   // If not submitted, show contact form
   if (!submitted) {
     return (
-      <div className="max-w-lg mx-auto bg-card p-8 rounded-lg shadow-card space-y-6 mt-8">
-        <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center gap-2">
-          💪 Get Your Personalized Fitness Plan
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block font-medium mb-1">
-              Email <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="email"
-              type="email"
-              className={`w-full px-3 py-2 border rounded focus:outline-none ${
-                errors.email ? "border-red-500" : "border-border"
-              }`}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-            )}
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-grow">
+          <div className="max-w-lg mx-auto bg-card p-8 rounded-lg shadow-card space-y-6 mt-8">
+            <h2 className="text-2xl font-bold text-center mb-4 flex items-center justify-center gap-2">
+              💪 Get Your Personalized Fitness Plan
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block font-medium mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  className={`w-full px-3 py-2 border rounded focus:outline-none ${
+                    errors.email ? "border-red-500" : "border-border"
+                  }`}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="phone" className="block font-medium mb-1">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  className={`w-full px-3 py-2 border rounded focus:outline-none ${
+                    errors.phone ? "border-red-500" : "border-border"
+                  }`}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 234 567 8901"
+                  autoComplete="tel"
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-primary text-white py-2 rounded font-semibold hover:bg-primary/90 transition"
+              >
+                Show My Fitness Plan
+              </button>
+            </form>
+            <p className="text-xs text-muted-foreground text-center">
+              We respect your privacy. Your contact info is only used to
+              personalize your experience.
+            </p>
           </div>
-          <div>
-            <label htmlFor="phone" className="block font-medium mb-1">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              className={`w-full px-3 py-2 border rounded focus:outline-none ${
-                errors.phone ? "border-red-500" : "border-border"
-              }`}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 234 567 8901"
-              autoComplete="tel"
-            />
-            {errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-            )}
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-primary text-white py-2 rounded font-semibold hover:bg-primary/90 transition"
-          >
-            Show My Fitness Plan
-          </button>
-        </form>
-        <p className="text-xs text-muted-foreground text-center">
-          We respect your privacy. Your contact info is only used to personalize
-          your experience.
-        </p>
+        </main>
+        <Footer />
       </div>
     );
   }
 
   // If submitted, show the fitness plan
   return (
-    <div className="space-y-6">
-      {/* Summary Card */}
-      <div className="bg-gradient-hero text-white p-6 rounded-lg shadow-fitness">
-        <div className="flex items-center gap-3 mb-4">
-          <TrendingUp className="w-6 h-6" />
-          <h2 className="text-2xl font-bold">Your Fitness Journey</h2>
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-grow space-y-6">
+        {/* Summary Card */}
+        <div className="bg-gradient-hero text-white p-6 rounded-lg shadow-fitness">
+          <div className="flex items-center gap-3 mb-4">
+            <TrendingUp className="w-6 h-6" />
+            <h2 className="text-2xl font-bold">Your Fitness Journey</h2>
+          </div>
+          <p className="text-lg leading-relaxed">{plan.summary}</p>
+          {!plan.feasible && (
+            <div className="mt-4 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+              <p className="text-yellow-100 font-medium">
+                ⚠️ Consider a longer timeline for safer, more sustainable
+                results
+              </p>
+            </div>
+          )}
         </div>
-        <p className="text-lg leading-relaxed">{plan.summary}</p>
-        {!plan.feasible && (
-          <div className="mt-4 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
-            <p className="text-yellow-100 font-medium">
-              ⚠️ Consider a longer timeline for safer, more sustainable results
+
+        {/* Plan Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-card p-6 rounded-lg shadow-card">
+            <div className="flex items-center gap-3 mb-4">
+              <Activity className="w-5 h-5 text-primary" />
+              <h3 className="text-xl font-semibold">Workout Plan</h3>
+            </div>
+            <p className="text-muted-foreground">
+              {plan.workoutRecommendations}
             </p>
           </div>
-        )}
-      </div>
 
-      {/* Plan Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-card p-6 rounded-lg shadow-card">
-          <div className="flex items-center gap-3 mb-4">
-            <Activity className="w-5 h-5 text-primary" />
-            <h3 className="text-xl font-semibold">Workout Plan</h3>
+          <div className="bg-card p-6 rounded-lg shadow-card">
+            <div className="flex items-center gap-3 mb-4">
+              <Target className="w-5 h-5 text-accent" />
+              <h3 className="text-xl font-semibold">Nutrition Guide</h3>
+            </div>
+            <p className="text-muted-foreground">{plan.dietTips}</p>
           </div>
-          <p className="text-muted-foreground">{plan.workoutRecommendations}</p>
         </div>
 
+        {/* Weekly Breakdown */}
         <div className="bg-card p-6 rounded-lg shadow-card">
-          <div className="flex items-center gap-3 mb-4">
-            <Target className="w-5 h-5 text-accent" />
-            <h3 className="text-xl font-semibold">Nutrition Guide</h3>
+          <div className="flex items-center gap-3 mb-6">
+            <Calendar className="w-5 h-5 text-primary" />
+            <h3 className="text-xl font-semibold">Weekly Breakdown</h3>
           </div>
-          <p className="text-muted-foreground">{plan.dietTips}</p>
-        </div>
-      </div>
 
-      {/* Weekly Breakdown */}
-      <div className="bg-card p-6 rounded-lg shadow-card">
-        <div className="flex items-center gap-3 mb-6">
-          <Calendar className="w-5 h-5 text-primary" />
-          <h3 className="text-xl font-semibold">Weekly Breakdown</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plan.weeklyPlan.slice(0, 6).map((week) => (
-            <div
-              key={week.week}
-              className="border border-border p-4 rounded-lg"
-            >
-              <h4 className="font-semibold text-primary mb-2">
-                Week {week.week}
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium">Goal:</span> {week.goal}
-                </div>
-                <div>
-                  <span className="font-medium">Diet:</span> {week.diet}
-                </div>
-                <div>
-                  <span className="font-medium">Workout:</span> {week.workout}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {plan.weeklyPlan.slice(0, 6).map((week) => (
+              <div
+                key={week.week}
+                className="border border-border p-4 rounded-lg"
+              >
+                <h4 className="font-semibold text-primary mb-2">
+                  Week {week.week}
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium">Goal:</span> {week.goal}
+                  </div>
+                  <div>
+                    <span className="font-medium">Diet:</span> {week.diet}
+                  </div>
+                  <div>
+                    <span className="font-medium">Workout:</span> {week.workout}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Milestones & Budget */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-card p-6 rounded-lg shadow-card">
-          <div className="flex items-center gap-3 mb-4">
-            <Target className="w-5 h-5 text-accent" />
-            <h3 className="text-xl font-semibold">Key Milestones</h3>
-          </div>
-          <ul className="space-y-2">
-            {plan.milestones.map((milestone, index) => (
-              <li key={index} className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
-                <span className="text-muted-foreground">{milestone}</span>
-              </li>
             ))}
-          </ul>
+          </div>
         </div>
 
-        <div className="bg-card p-6 rounded-lg shadow-card">
-          <div className="flex items-center gap-3 mb-4">
-            <DollarSign className="w-5 h-5 text-green-500" />
-            <h3 className="text-xl font-semibold">Monthly Investment</h3>
+        {/* Milestones & Budget */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-card p-6 rounded-lg shadow-card">
+            <div className="flex items-center gap-3 mb-4">
+              <Target className="w-5 h-5 text-accent" />
+              <h3 className="text-xl font-semibold">Key Milestones</h3>
+            </div>
+            <ul className="space-y-2">
+              {plan.milestones.map((milestone, index) => (
+                <li key={index} className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-accent rounded-full"></div>
+                  <span className="text-muted-foreground">{milestone}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="text-2xl font-bold text-green-500 mb-2">
-            {plan.estimatedMonthlyCost}
-          </div>
-          <p className="text-muted-foreground text-sm">
-            Budget-optimized plan tailored to your financial goals
-          </p>
-        </div>
-      </div>
 
-      {/* Motivational Quote */}
-      <div className="bg-gradient-accent text-white p-6 rounded-lg shadow-fitness text-center">
-        <p className="text-xl font-semibold">{plan.motivationalQuote}</p>
-      </div>
+          <div className="bg-card p-6 rounded-lg shadow-card">
+            <div className="flex items-center gap-3 mb-4">
+              <DollarSign className="w-5 h-5 text-green-500" />
+              <h3 className="text-xl font-semibold">Monthly Investment</h3>
+            </div>
+            <div className="text-2xl font-bold text-green-500 mb-2">
+              {plan.estimatedMonthlyCost}
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Budget-optimized plan tailored to your financial goals
+            </p>
+          </div>
+        </div>
+
+        {/* Motivational Quote */}
+        <div className="bg-gradient-accent text-white p-6 rounded-lg shadow-fitness text-center">
+          <p className="text-xl font-semibold">{plan.motivationalQuote}</p>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };
