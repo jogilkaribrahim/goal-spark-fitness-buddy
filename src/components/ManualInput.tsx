@@ -1,32 +1,51 @@
-import React, { useState } from 'react';
-import { Calculator, Target, Calendar, DollarSign } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
+import React, { useState } from "react";
+import { Calculator, Target, Calendar, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 interface ManualInputProps {
   onDataSubmitted: (data: any) => void;
 }
 
-export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => {
+export const ManualInput: React.FC<ManualInputProps> = ({
+  onDataSubmitted,
+}) => {
   const [formData, setFormData] = useState({
-    height: '',
-    weight: '',
-    targetWeight: '',
-    goal: '',
-    duration: '',
-    budget: '',
-    currency: 'USD',
-    units: 'metric'
+    height: "",
+    weight: "",
+    targetWeight: "",
+    goal: "",
+    duration: "",
+    budget: "",
+    currency: "INR",
+    units: "metric",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.height || !formData.weight || !formData.goal || !formData.duration) {
+
+    if (
+      !formData.height ||
+      !formData.weight ||
+      !formData.goal ||
+      !formData.duration
+    ) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
@@ -37,23 +56,27 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
 
     const height = parseFloat(formData.height);
     const weight = parseFloat(formData.weight);
-    const targetWeight = formData.targetWeight ? parseFloat(formData.targetWeight) : weight;
-    
+    const targetWeight = formData.targetWeight
+      ? parseFloat(formData.targetWeight)
+      : weight;
+
     // Calculate BMI
-    const heightInMeters = formData.units === 'metric' ? height / 100 : height * 0.0254;
-    const weightInKg = formData.units === 'metric' ? weight : weight * 0.453592;
+    const heightInMeters =
+      formData.units === "metric" ? height / 100 : height * 0.0254;
+    const weightInKg = formData.units === "metric" ? weight : weight * 0.453592;
     const bmi = weightInKg / (heightInMeters * heightInMeters);
 
     const data = {
-      height: formData.units === 'metric' ? height : height * 2.54,
-      weight: formData.units === 'metric' ? weight : weight * 0.453592,
-      targetWeight: formData.units === 'metric' ? targetWeight : targetWeight * 0.453592,
+      height: formData.units === "metric" ? height : height * 2.54,
+      weight: formData.units === "metric" ? weight : weight * 0.453592,
+      targetWeight:
+        formData.units === "metric" ? targetWeight : targetWeight * 0.453592,
       bmi: parseFloat(bmi.toFixed(1)),
       goal: formData.goal,
       duration: parseInt(formData.duration),
       budget: formData.budget ? parseFloat(formData.budget) : 0,
       currency: formData.currency,
-      source: 'manual'
+      source: "manual",
     };
 
     onDataSubmitted(data);
@@ -64,7 +87,7 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
   };
 
   const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -83,7 +106,10 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="units">Units</Label>
-              <Select value={formData.units} onValueChange={(value) => updateFormData('units', value)}>
+              <Select
+                value={formData.units}
+                onValueChange={(value) => updateFormData("units", value)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -101,29 +127,29 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
               <Input
                 id="height"
                 type="number"
-                placeholder={formData.units === 'metric' ? '176' : '69'}
+                placeholder={formData.units === "metric" ? "176" : "69"}
                 value={formData.height}
-                onChange={(e) => updateFormData('height', e.target.value)}
+                onChange={(e) => updateFormData("height", e.target.value)}
                 required
               />
               <p className="text-xs text-muted-foreground">
-                {formData.units === 'metric' ? 'in centimeters' : 'in inches'}
+                {formData.units === "metric" ? "in centimeters" : "in inches"}
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="weight">Current Weight *</Label>
               <Input
                 id="weight"
                 type="number"
                 step="0.1"
-                placeholder={formData.units === 'metric' ? '92' : '203'}
+                placeholder={formData.units === "metric" ? "92" : "203"}
                 value={formData.weight}
-                onChange={(e) => updateFormData('weight', e.target.value)}
+                onChange={(e) => updateFormData("weight", e.target.value)}
                 required
               />
               <p className="text-xs text-muted-foreground">
-                {formData.units === 'metric' ? 'in kilograms' : 'in pounds'}
+                {formData.units === "metric" ? "in kilograms" : "in pounds"}
               </p>
             </div>
           </div>
@@ -131,7 +157,11 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="goal">Fitness Goal *</Label>
-              <Select value={formData.goal} onValueChange={(value) => updateFormData('goal', value)} required>
+              <Select
+                value={formData.goal}
+                onValueChange={(value) => updateFormData("goal", value)}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your goal" />
                 </SelectTrigger>
@@ -144,19 +174,19 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="target-weight">Target Weight</Label>
               <Input
                 id="target-weight"
                 type="number"
                 step="0.1"
-                placeholder={formData.units === 'metric' ? '80' : '176'}
+                placeholder={formData.units === "metric" ? "80" : "176"}
                 value={formData.targetWeight}
-                onChange={(e) => updateFormData('targetWeight', e.target.value)}
+                onChange={(e) => updateFormData("targetWeight", e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                {formData.units === 'metric' ? 'in kilograms' : 'in pounds'}
+                {formData.units === "metric" ? "in kilograms" : "in pounds"}
               </p>
             </div>
           </div>
@@ -164,7 +194,11 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="duration">Goal Duration *</Label>
-              <Select value={formData.duration} onValueChange={(value) => updateFormData('duration', value)} required>
+              <Select
+                value={formData.duration}
+                onValueChange={(value) => updateFormData("duration", value)}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
@@ -176,11 +210,14 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="budget">Monthly Budget</Label>
               <div className="flex gap-2">
-                <Select value={formData.currency} onValueChange={(value) => updateFormData('currency', value)}>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => updateFormData("currency", value)}
+                >
                   <SelectTrigger className="w-24">
                     <SelectValue />
                   </SelectTrigger>
@@ -195,7 +232,7 @@ export const ManualInput: React.FC<ManualInputProps> = ({ onDataSubmitted }) => 
                   type="number"
                   placeholder="100"
                   value={formData.budget}
-                  onChange={(e) => updateFormData('budget', e.target.value)}
+                  onChange={(e) => updateFormData("budget", e.target.value)}
                 />
               </div>
             </div>
