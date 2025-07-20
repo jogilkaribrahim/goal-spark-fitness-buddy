@@ -54,7 +54,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="relative w-full bg-gradient-hero text-white overflow-hidden">
+      <div className="relative w-full min-h-[60vh] md:min-h-[75vh] bg-gradient-hero text-white overflow-hidden flex items-center">
         <div className="absolute inset-0 w-full h-full">
           <img
             src={heroImage}
@@ -67,13 +67,14 @@ const Index = () => {
               position: "absolute",
               top: 0,
               height: "100%",
+              maxHeight: "100vh",
             }}
           />
           <div className="absolute inset-0 w-full h-full bg-gradient-hero/80"></div>
         </div>
 
-        <div className="relative container mx-auto px-4 py-20">
-          <div className="text-center max-w-4xl mx-auto">
+        <div className="relative container mx-auto px-4 py-20 flex items-center min-h-[60vh] md:min-h-[75vh]">
+          <div className="text-center max-w-4xl mx-auto w-full">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
               Your Personal Fitness Goal Planner
             </h1>
