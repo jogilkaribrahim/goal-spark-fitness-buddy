@@ -151,29 +151,34 @@ All colors MUST be HSL.
   }
 }
 
-.shiny-text {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--primary)) 15%,
-    /* #fff 30%, */ hsl(var(--primary-glow)) 55%,
-    /* #fff 30%, */ hsl(var(--primary-glow)) 55%,
-
-    hsl(var(--accent)) 75%,
-    hsl(var(--primary)) 100%
-  );
-  background-size: 200% auto;
-  color: hsl(var(--primary));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  position: relative;
-  animation: shine 2.5s linear infinite;
-  /* optional: add a soft shadow effect */
-  /* filter: drop-shadow(0 1px 5px hsl(var(--primary-glow) / 0.24)); */
+/* From Uiverse.io by mrhyddenn */
+.mouse-btn {
+  margin: 10px auto;
+  width: 40px;
+  height: 80px;
+  border: 3px solid #fff; /* green-500 */
+  border-radius: 20px;
+  display: flex;
 }
 
-@keyframes shine {
-  to {
-    background-position: 200% center;
+.mouse-scroll {
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(170deg, #fff 0%, #fff 100%);
+  border-radius: 50%;
+  margin: auto;
+  animation: scrolling13 1s linear infinite;
+}
+
+@keyframes scrolling13 {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(20px);
   }
 }

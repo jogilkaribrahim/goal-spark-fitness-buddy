@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Activity, Target, Zap, CheckCircle } from "lucide-react";
 import { PDFUpload } from "@/components/PDFUpload";
 import { ManualInput } from "@/components/ManualInput";
@@ -8,12 +8,47 @@ import heroImage from "@/assets/fitness-hero.jpg";
 import Footer from "@/components/Footer";
 import Cal, { getCalApi } from "@calcom/embed-react";
 
+// Animated scroll-down arrow component
+const ScrollDownArrow: React.FC<{ onClick?: () => void }> = ({ onClick }) => (
+  <button
+    aria-label="Scroll to next section"
+    onClick={onClick}
+    className="absolute left-1/2 bottom-2  hidden md:bottom-8 -translate-x-1/2 z-20 md:flex flex-col items-center group focus:outline-none"
+    style={{ background: "none", border: "none" }}
+  >
+    <div className="container_mouse flex flex-col items-center">
+      <span
+        className="mouse-btn"
+        style={{
+          width: "32px",
+          height: "64px",
+          borderWidth: "2px",
+        }}
+      >
+        <span
+          className="mouse-scroll"
+          style={{
+            width: "16px",
+            height: "16px",
+          }}
+        ></span>
+      </span>
+      <span className="text-xs sm:text-sm md:text-base mt-1 text-white/80">
+        Scroll Down
+      </span>
+    </div>
+  </button>
+);
+
 const Index = () => {
   const [step, setStep] = useState<"input" | "plan">("input");
   const [inputMethod, setInputMethod] = useState<"pdf" | "manual">("pdf");
   const [fitnessData, setFitnessData] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCal, setShowCal] = useState(false);
+
+  // Ref for the features section to scroll to
+  const featuresRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     (async function () {
@@ -44,6 +79,13 @@ const Index = () => {
     setStep("input");
     setFitnessData(null);
     setIsProcessing(false);
+  };
+
+  // Scroll to features section
+  const handleScrollToFeatures = () => {
+    if (featuresRef.current) {
+      featuresRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   if (showCal) {
@@ -93,7 +135,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="relative w-full min-h-[60vh] md:min-h-[75vh] bg-gradient-hero text-white overflow-hidden flex items-center">
+      <div className="relative w-full h-[100vh] md:min-h-[75vh] bg-gradient-hero text-white overflow-hidden flex items-center">
         <div className="absolute inset-0 w-full h-full">
           <img
             src={heroImage}
@@ -136,11 +178,18 @@ const Index = () => {
               </div>
             </div>
           </div>
+          {/* Scroll Down Arrow */}
+          <ScrollDownArrow onClick={handleScrollToFeatures} />
         </div>
       </div>
 
       {/* Features Section */}
-      <div className="container mx-auto px-4 py-16">
+      <div
+        className="container mx-auto px-4 py-16"
+        ref={featuresRef}
+        tabIndex={-1}
+        aria-label="Get Started Section"
+      >
         {/* Input Method Selection */}
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
@@ -161,7 +210,7 @@ const Index = () => {
             }}
           >
             <div
-              className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2 mb-8 mx-auto bg-primary/10 border-2 border border-primary rounded-lg p-4 sm:p-6 shadow-lg transition-transform duration-200 hover:scale-105 cursor-pointer"
+              className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2 mb-8 mx-auto bg-primary/10 border-2  border-primary rounded-lg p-4 sm:p-6 shadow-lg transition-transform duration-200 hover:scale-105 cursor-pointer"
               style={{
                 boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08)",
               }}
