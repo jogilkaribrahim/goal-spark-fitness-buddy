@@ -8,38 +8,6 @@ import heroImage from "@/assets/fitness-hero.jpg";
 import Footer from "@/components/Footer";
 import Cal, { getCalApi } from "@calcom/embed-react";
 
-// Animated scroll-down arrow component
-const ScrollDownArrow: React.FC<{ onClick?: () => void }> = ({ onClick }) => (
-  <button
-    aria-label="Scroll to next section"
-    onClick={onClick}
-    className="absolute left-1/2 bottom-2  hidden md:bottom-8 -translate-x-1/2 z-20 md:flex flex-col items-center group focus:outline-none"
-    style={{ background: "none", border: "none" }}
-  >
-    <div className="container_mouse flex flex-col items-center">
-      <span
-        className="mouse-btn"
-        style={{
-          width: "32px",
-          height: "64px",
-          borderWidth: "2px",
-        }}
-      >
-        <span
-          className="mouse-scroll"
-          style={{
-            width: "16px",
-            height: "16px",
-          }}
-        ></span>
-      </span>
-      <span className="text-xs sm:text-sm md:text-base mt-1 text-white/80">
-        Scroll Down
-      </span>
-    </div>
-  </button>
-);
-
 const Index = () => {
   const [step, setStep] = useState<"input" | "plan">("input");
   const [inputMethod, setInputMethod] = useState<"pdf" | "manual">("pdf");
@@ -49,6 +17,20 @@ const Index = () => {
 
   // Ref for the features section to scroll to
   const featuresRef = useRef<HTMLDivElement | null>(null);
+
+  // GetStartedBtn as a component that scrolls to features section
+  const GetStartedBtn = () => (
+    <Button
+      type="button"
+      // variant="hero"
+      size="lg"
+      className="w-fit px-8 py-4 rounded-full shadow-lg text-lg font-semibold flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-xl"
+      onClick={handleScrollToFeatures}
+    >
+      <Zap className="w-5 h-5 mr-2 animate-bounce" />
+      Get Started
+    </Button>
+  );
 
   useEffect(() => {
     (async function () {
@@ -177,9 +159,10 @@ const Index = () => {
                 <span>Weekly Milestones</span>
               </div>
             </div>
+            <div className="pt-12 flex justify-center">
+              <GetStartedBtn />
+            </div>
           </div>
-          {/* Scroll Down Arrow */}
-          <ScrollDownArrow onClick={handleScrollToFeatures} />
         </div>
       </div>
 
