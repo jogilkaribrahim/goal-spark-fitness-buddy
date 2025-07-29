@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calculator, Target, Calendar, DollarSign } from "lucide-react";
+import { Calculator, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,76 +18,224 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { useData } from "@/hooks/get-fitness-data"; // <-- import your context
+
+interface ManualPlanInputUser {
+  name: string;
+  age: number;
+  gender: "male" | "female" | "other";
+  height_cm: number;
+  weight_kg: number;
+  activity_level:
+    | "sedentary"
+    | "lightly_active"
+    | "moderately_active"
+    | "very_active"
+    | "extra_active";
+  goal:
+    | "weight_loss"
+    | "muscle_gain"
+    | "maintain_fitness"
+    | "improve_stamina"
+    | "improve_flexibility";
+  diet_preference: "vegetarian" | "non_vegetarian" | "vegan" | "eggetarian";
+  allergies?: string[];
+  health_conditions?: string[];
+  preferred_workout_time?: "morning" | "afternoon" | "evening" | "night";
+  workout_days_per_week?: number;
+  target_duration_months: number;
+  monthly_budget_inr: number;
+}
+
+interface ManualPlanInput {
+  input_type: "manual";
+  user: ManualPlanInputUser;
+}
 
 interface ManualInputProps {
-  onDataSubmitted: (data: any) => void;
+  onDataSubmitted: (data: ManualPlanInput) => void;
 }
+
+const initialFormData = {
+  name: "",
+  age: "",
+  gender: "",
+  height: "",
+  weight: "",
+  activity_level: "",
+  goal: "",
+  diet_preference: "",
+  allergies: "",
+  health_conditions: "",
+  preferred_workout_time: "",
+  workout_days_per_week: "",
+  target_duration_months: "",
+  monthly_budget_inr: "",
+};
 
 export const ManualInput: React.FC<ManualInputProps> = ({
   onDataSubmitted,
 }) => {
-  const [formData, setFormData] = useState({
-    height: "",
-    weight: "",
-    targetWeight: "",
-    goal: "",
-    duration: "",
-    budget: "",
-    currency: "INR",
-    units: "metric",
-  });
+  const [formData, setFormData] =
+    useState<typeof initialFormData>(initialFormData);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Use the global data context
+  const { setData } = useData();
+
+  const updateFormData = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const validate = () => {
+    // Required fields
+    const requiredFields = [
+      "name",
+      "age",
+      "gender",
+      "height",
+      "weight",
+      "activity_level",
+      "goal",
+      "diet_preference",
+      "target_duration_months",
+      "monthly_budget_inr",
+    ];
+    for (const field of requiredFields) {
+      if (!formData[field]) {
+        return `Please fill in the required field: ${field.replace(/_/g, " ")}`;
+      }
+    }
+    // Numeric validations
+    const age = Number(formData.age);
+    if (isNaN(age) || age < 10 || age > 100)
+      return "Age must be between 10 and 100";
+    const height = Number(formData.height);
+    if (isNaN(height) || height < 50 || height > 300)
+      return "Height must be between 50 and 300 cm";
+    const weight = Number(formData.weight);
+    if (isNaN(weight) || weight < 20 || weight > 300)
+      return "Weight must be between 20 and 300 kg";
+    const target_duration_months = Number(formData.target_duration_months);
+    if (
+      isNaN(target_duration_months) ||
+      target_duration_months < 1 ||
+      target_duration_months > 6
+    )
+      return "Target duration must be between 1 and 6 months";
+    const monthly_budget_inr = Number(formData.monthly_budget_inr);
+    if (isNaN(monthly_budget_inr) || monthly_budget_inr < 0)
+      return "Monthly budget must be 0 or more";
+    if (
+      formData.workout_days_per_week &&
+      (Number(formData.workout_days_per_week) < 1 ||
+        Number(formData.workout_days_per_week) > 7)
+    )
+      return "Workout days per week must be between 1 and 7";
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.height ||
-      !formData.weight ||
-      !formData.goal ||
-      !formData.duration
-    ) {
+    const error = validate();
+    if (error) {
       toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
+        title: "Missing or invalid information",
+        description: error,
         variant: "destructive",
       });
       return;
     }
 
-    const height = parseFloat(formData.height);
-    const weight = parseFloat(formData.weight);
-    const targetWeight = formData.targetWeight
-      ? parseFloat(formData.targetWeight)
-      : weight;
+    // Parse allergies and health_conditions as arrays (comma separated)
+    const allergies =
+      formData.allergies && formData.allergies.trim().length > 0
+        ? formData.allergies
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+    const health_conditions =
+      formData.health_conditions && formData.health_conditions.trim().length > 0
+        ? formData.health_conditions
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
 
-    // Calculate BMI
-    const heightInMeters =
-      formData.units === "metric" ? height / 100 : height * 0.0254;
-    const weightInKg = formData.units === "metric" ? weight : weight * 0.453592;
-    const bmi = weightInKg / (heightInMeters * heightInMeters);
-
-    const data = {
-      height: formData.units === "metric" ? height : height * 2.54,
-      weight: formData.units === "metric" ? weight : weight * 0.453592,
-      targetWeight:
-        formData.units === "metric" ? targetWeight : targetWeight * 0.453592,
-      bmi: parseFloat(bmi.toFixed(1)),
-      goal: formData.goal,
-      duration: parseInt(formData.duration),
-      budget: formData.budget ? parseFloat(formData.budget) : 0,
-      currency: formData.currency,
-      source: "manual",
+    const user: ManualPlanInputUser = {
+      name: formData.name.trim(),
+      age: Number(formData.age),
+      gender: formData.gender as ManualPlanInputUser["gender"],
+      height_cm: Number(formData.height),
+      weight_kg: Number(formData.weight),
+      activity_level:
+        formData.activity_level as ManualPlanInputUser["activity_level"],
+      goal: formData.goal as ManualPlanInputUser["goal"],
+      diet_preference:
+        formData.diet_preference as ManualPlanInputUser["diet_preference"],
+      allergies,
+      health_conditions,
+      preferred_workout_time: formData.preferred_workout_time
+        ? (formData.preferred_workout_time as ManualPlanInputUser["preferred_workout_time"])
+        : undefined,
+      workout_days_per_week: formData.workout_days_per_week
+        ? Number(formData.workout_days_per_week)
+        : undefined,
+      target_duration_months: Number(formData.target_duration_months),
+      monthly_budget_inr: Number(formData.monthly_budget_inr),
     };
 
-    onDataSubmitted(data);
-    toast({
-      title: "Data submitted successfully!",
-      description: "Generating your personalized fitness plan...",
-    });
-  };
+    const data: ManualPlanInput = {
+      input_type: "manual",
+      user,
+    };
 
-  const updateFormData = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setIsSubmitting(true);
+
+    try {
+      // Send data to the API
+      const response = await fetch(
+        "https://n8n.wolvesandcompany.in/webhook/gg-nutritional-calculator",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to submit data to the nutritional calculator API."
+        );
+      }
+
+      // Await and parse the response JSON
+      const result = await response.json();
+      console.log("🚀 ~ handleSubmit ~ result:", result);
+
+      // Store the result in the global data context
+      setData(result);
+
+      onDataSubmitted(data);
+      toast({
+        title: "Data submitted successfully!",
+        description: "Generating your personalized fitness plan...",
+      });
+      setFormData(initialFormData);
+    } catch (err: any) {
+      toast({
+        title: "API Error",
+        description: err?.message || "Failed to submit data to the API.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -105,17 +253,70 @@ export const ManualInput: React.FC<ManualInputProps> = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="units">Units</Label>
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your Name"
+                value={formData.name}
+                onChange={(e) => updateFormData("name", e.target.value)}
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="age">Age *</Label>
+              <Input
+                id="age"
+                type="number"
+                min={10}
+                max={100}
+                placeholder="25"
+                value={formData.age}
+                onChange={(e) => updateFormData("age", e.target.value)}
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender *</Label>
               <Select
-                value={formData.units}
-                onValueChange={(value) => updateFormData("units", value)}
+                value={formData.gender}
+                onValueChange={(value) => updateFormData("gender", value)}
+                required
+                disabled={isSubmitting}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="metric">Metric (cm/kg)</SelectItem>
-                  <SelectItem value="imperial">Imperial (in/lbs)</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="diet_preference">Diet Preference *</Label>
+              <Select
+                value={formData.diet_preference}
+                onValueChange={(value) =>
+                  updateFormData("diet_preference", value)
+                }
+                required
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select diet" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                  <SelectItem value="non_vegetarian">Non-Vegetarian</SelectItem>
+                  <SelectItem value="vegan">Vegan</SelectItem>
+                  <SelectItem value="eggetarian">Eggetarian</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -123,124 +324,218 @@ export const ManualInput: React.FC<ManualInputProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="height">Height *</Label>
+              <Label htmlFor="height">Height (cm) *</Label>
               <Input
                 id="height"
                 type="number"
-                placeholder={formData.units === "metric" ? "176" : "69"}
+                min={50}
+                max={300}
+                placeholder="170"
                 value={formData.height}
                 onChange={(e) => updateFormData("height", e.target.value)}
                 required
+                disabled={isSubmitting}
               />
-              <p className="text-xs text-muted-foreground">
-                {formData.units === "metric" ? "in centimeters" : "in inches"}
-              </p>
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="weight">Current Weight *</Label>
+              <Label htmlFor="weight">Weight (kg) *</Label>
               <Input
                 id="weight"
                 type="number"
+                min={20}
+                max={300}
                 step="0.1"
-                placeholder={formData.units === "metric" ? "92" : "203"}
+                placeholder="70"
                 value={formData.weight}
                 onChange={(e) => updateFormData("weight", e.target.value)}
                 required
+                disabled={isSubmitting}
               />
-              <p className="text-xs text-muted-foreground">
-                {formData.units === "metric" ? "in kilograms" : "in pounds"}
-              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="activity_level">Activity Level *</Label>
+              <Select
+                value={formData.activity_level}
+                onValueChange={(value) =>
+                  updateFormData("activity_level", value)
+                }
+                required
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select activity level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sedentary">
+                    Sedentary (little or no exercise)
+                  </SelectItem>
+                  <SelectItem value="lightly_active">
+                    Lightly Active (1-3 days/week)
+                  </SelectItem>
+                  <SelectItem value="moderately_active">
+                    Moderately Active (3-5 days/week)
+                  </SelectItem>
+                  <SelectItem value="very_active">
+                    Very Active (6-7 days/week)
+                  </SelectItem>
+                  <SelectItem value="extra_active">
+                    Extra Active (very hard exercise)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="goal">Fitness Goal *</Label>
               <Select
                 value={formData.goal}
                 onValueChange={(value) => updateFormData("goal", value)}
                 required
+                disabled={isSubmitting}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your goal" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weight-loss">Weight Loss</SelectItem>
-                  <SelectItem value="muscle-gain">Muscle Gain</SelectItem>
-                  <SelectItem value="toning">Toning</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="endurance">Endurance</SelectItem>
+                  <SelectItem value="weight_loss">Weight Loss</SelectItem>
+                  <SelectItem value="muscle_gain">Muscle Gain</SelectItem>
+                  <SelectItem value="maintain_fitness">
+                    Maintain Fitness
+                  </SelectItem>
+                  <SelectItem value="improve_stamina">
+                    Improve Stamina
+                  </SelectItem>
+                  <SelectItem value="improve_flexibility">
+                    Improve Flexibility
+                  </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="target-weight">Target Weight</Label>
-              <Input
-                id="target-weight"
-                type="number"
-                step="0.1"
-                placeholder={formData.units === "metric" ? "80" : "176"}
-                value={formData.targetWeight}
-                onChange={(e) => updateFormData("targetWeight", e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                {formData.units === "metric" ? "in kilograms" : "in pounds"}
-              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="duration">Goal Duration *</Label>
+              <Label htmlFor="target_duration_months">
+                Target Duration (months) *
+              </Label>
               <Select
-                value={formData.duration}
-                onValueChange={(value) => updateFormData("duration", value)}
+                value={formData.target_duration_months}
+                onValueChange={(value) =>
+                  updateFormData("target_duration_months", value)
+                }
                 required
+                disabled={isSubmitting}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="30">30 days</SelectItem>
-                  <SelectItem value="60">60 days</SelectItem>
-                  <SelectItem value="90">90 days</SelectItem>
-                  <SelectItem value="120">120 days</SelectItem>
+                  <SelectItem value="1">1 month</SelectItem>
+                  <SelectItem value="2">2 months</SelectItem>
+                  <SelectItem value="3">3 months</SelectItem>
+                  <SelectItem value="4">4 months</SelectItem>
+                  <SelectItem value="5">5 months</SelectItem>
+                  <SelectItem value="6">6 months</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="budget">Monthly Budget</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={formData.currency}
-                  onValueChange={(value) => updateFormData("currency", value)}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="INR">INR</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  id="budget"
-                  type="number"
-                  placeholder="100"
-                  value={formData.budget}
-                  onChange={(e) => updateFormData("budget", e.target.value)}
-                />
-              </div>
+              <Label htmlFor="monthly_budget_inr">Monthly Budget (INR) *</Label>
+              <Input
+                id="monthly_budget_inr"
+                type="number"
+                min={0}
+                placeholder="1000"
+                value={formData.monthly_budget_inr}
+                onChange={(e) =>
+                  updateFormData("monthly_budget_inr", e.target.value)
+                }
+                required
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 
-          <Button type="submit" variant="hero" size="lg" className="w-full">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="preferred_workout_time">
+                Preferred Workout Time
+              </Label>
+              <Select
+                value={formData.preferred_workout_time}
+                onValueChange={(value) =>
+                  updateFormData("preferred_workout_time", value)
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">Morning</SelectItem>
+                  <SelectItem value="afternoon">Afternoon</SelectItem>
+                  <SelectItem value="evening">Evening</SelectItem>
+                  <SelectItem value="night">Night</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="workout_days_per_week">Workout Days/Week</Label>
+              <Input
+                id="workout_days_per_week"
+                type="number"
+                min={1}
+                max={7}
+                placeholder="3"
+                value={formData.workout_days_per_week}
+                onChange={(e) =>
+                  updateFormData("workout_days_per_week", e.target.value)
+                }
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="allergies">Allergies (comma separated)</Label>
+              <Input
+                id="allergies"
+                type="text"
+                placeholder="e.g. peanuts, gluten or NA"
+                value={formData.allergies}
+                onChange={(e) => updateFormData("allergies", e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="health_conditions">
+                Health Conditions (comma separated)
+              </Label>
+              <Input
+                id="health_conditions"
+                type="text"
+                placeholder="e.g. diabetes, asthma or NA"
+                value={formData.health_conditions}
+                onChange={(e) =>
+                  updateFormData("health_conditions", e.target.value)
+                }
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            variant="hero"
+            size="lg"
+            className="w-full"
+            disabled={isSubmitting}
+          >
             <Target className="w-4 h-4 mr-2" />
-            Generate Fitness Plan
+            {isSubmitting ? "Submitting..." : "Generate Fitness Plan"}
           </Button>
         </form>
       </CardContent>

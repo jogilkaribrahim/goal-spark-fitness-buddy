@@ -48,9 +48,9 @@ const Index = () => {
   }, []);
 
   const handleDataExtracted = (data: any) => {
+    console.log("🚀 ~ handleDataExtracted ~ data:", data);
     setFitnessData(data);
     setStep("plan");
-    setIsProcessing(false);
   };
 
   const handleUploadStart = () => {

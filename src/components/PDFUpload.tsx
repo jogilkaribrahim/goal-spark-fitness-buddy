@@ -20,8 +20,32 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 interface PDFUploadProps {
-  onDataExtracted: (data: any) => void;
+  onDataExtracted: (data: unknown) => void;
   onUploadStart: () => void;
+}
+
+type Gender = "male" | "female" | "other";
+type Goal =
+  | "weight_loss"
+  | "muscle_gain"
+  | "maintain_fitness"
+  | "improve_stamina"
+  | "improve_flexibility";
+type DietPreference = "vegetarian" | "non_vegetarian" | "vegan" | "eggetarian";
+type WorkoutTime = "morning" | "afternoon" | "evening" | "night";
+
+interface UserInput {
+  name: string;
+  age: number;
+  gender: Gender;
+  goal: Goal;
+  diet_preference: DietPreference;
+  allergies: string[];
+  health_conditions: string[];
+  preferred_workout_time: WorkoutTime;
+  workout_days_per_week: number;
+  target_duration_months: number;
+  monthly_budget_inr: number;
 }
 
 export const PDFUpload: React.FC<PDFUploadProps> = ({
@@ -33,18 +57,47 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
   >("idle");
   const [fileName, setFileName] = useState<string>("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [extractedData, setExtractedData] = useState<any>(null);
+  const [pdfContent, setPdfContent] = useState<string>("");
 
-  // New input states
-  const [targetWeight, setTargetWeight] = useState<string>("");
-  const [goal, setGoal] = useState<string>("");
-  const [budget, setBudget] = useState<string>("");
-  const [currency, setCurrency] = useState<string>("INR");
+  // User input states
+  const [name, setName] = useState<string>("");
+  const [age, setAge] = useState<string>("");
+  const [gender, setGender] = useState<Gender | "">("");
+  const [goal, setGoal] = useState<Goal | "">("");
+  const [dietPreference, setDietPreference] = useState<DietPreference | "">("");
+  const [allergies, setAllergies] = useState<string>("");
+  const [healthConditions, setHealthConditions] = useState<string>("");
+  const [preferredWorkoutTime, setPreferredWorkoutTime] = useState<
+    WorkoutTime | ""
+  >("");
+  const [workoutDaysPerWeek, setWorkoutDaysPerWeek] = useState<string>("");
+  const [targetDurationMonths, setTargetDurationMonths] = useState<string>("");
+  const [monthlyBudgetInr, setMonthlyBudgetInr] = useState<string>("");
+
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   // Refs for file input
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const retryInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Helper: Read PDF as base64 string
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result === "string") {
+          // Remove the data:application/pdf;base64, prefix if present
+          const base64 = result.split(",")[1] || result;
+          resolve(base64);
+        } else {
+          reject(new Error("Failed to read file as base64"));
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -67,54 +120,74 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
     onUploadStart();
 
     try {
-      // Simulate PDF parsing - in real app, would use pdf-parse
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Mock extracted data from BMI report
-      const mockData = {
-        height: 176, // cm
-        weight: 92, // kg
-        bmi: 29.7,
-        bodyFat: 18.5,
-        muscleMass: 42.3,
-        waterPercentage: 58.2,
-        reportDate: new Date().toISOString(),
-        source: "pdf",
-      };
+      // Read PDF as base64 string
+      const base64 = await readFileAsBase64(file);
+      setPdfContent(base64);
 
       setUploadStatus("success");
-      setExtractedData(mockData);
 
       toast({
-        title: "PDF processed successfully!",
-        description: "Your BMI data has been extracted and analyzed.",
+        title: "PDF uploaded successfully!",
+        description: "Your BMI report PDF is ready for plan generation.",
       });
     } catch (error) {
       setUploadStatus("error");
-      setExtractedData(null);
+      setPdfContent("");
       toast({
         title: "Processing failed",
         description:
-          "Unable to extract data from PDF. Please try manual input.",
+          "Unable to read PDF file. Please try again or use a different file.",
         variant: "destructive",
       });
     }
   };
 
   const handleGenerate = async () => {
-    if (!extractedData || !pdfFile) {
+    // Validate all required fields
+    if (
+      !pdfContent ||
+      !name ||
+      !age ||
+      !gender ||
+      !goal ||
+      !dietPreference ||
+      !preferredWorkoutTime ||
+      !workoutDaysPerWeek ||
+      !targetDurationMonths ||
+      !monthlyBudgetInr
+    ) {
       toast({
-        title: "Missing PDF data",
-        description: "Please upload and process a PDF file first.",
+        title: "Missing information",
+        description:
+          "Please fill in all required fields and upload a PDF file.",
         variant: "destructive",
       });
       return;
     }
-    if (!targetWeight || !goal || !budget) {
+
+    // Validate age, workoutDaysPerWeek, targetDurationMonths, monthlyBudgetInr
+    const ageNum = parseInt(age, 10);
+    const workoutDaysNum = parseInt(workoutDaysPerWeek, 10);
+    const durationNum = parseInt(targetDurationMonths, 10);
+    const budgetNum = parseInt(monthlyBudgetInr, 10);
+
+    if (
+      isNaN(ageNum) ||
+      ageNum < 10 ||
+      ageNum > 100 ||
+      isNaN(workoutDaysNum) ||
+      workoutDaysNum < 1 ||
+      workoutDaysNum > 7 ||
+      isNaN(durationNum) ||
+      durationNum < 1 ||
+      durationNum > 6 ||
+      isNaN(budgetNum) ||
+      budgetNum < 0
+    ) {
       toast({
-        title: "Missing information",
+        title: "Invalid input values",
         description:
-          "Please fill in all fields: Target Weight, Goal, and Budget.",
+          "Please check that age, workout days, duration, and budget are within allowed ranges.",
         variant: "destructive",
       });
       return;
@@ -122,23 +195,46 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
 
     setIsGenerating(true);
 
+    // Prepare allergies and health_conditions as arrays
+    const allergiesArr = allergies
+      .split(",")
+      .map((a) => a.trim())
+      .filter((a) => a.length > 0);
+    const healthConditionsArr = healthConditions
+      .split(",")
+      .map((h) => h.trim())
+      .filter((h) => h.length > 0);
+
+    // Build the JSON payload
+    const payload = {
+      input_type: "bmi_pdf",
+      pdf_content: pdfContent,
+      user: {
+        name,
+        age: ageNum,
+        gender,
+        goal,
+        diet_preference: dietPreference,
+        allergies: allergiesArr,
+        health_conditions: healthConditionsArr,
+        preferred_workout_time: preferredWorkoutTime,
+        workout_days_per_week: workoutDaysNum,
+        target_duration_months: durationNum,
+        monthly_budget_inr: budgetNum,
+      },
+    };
+
     try {
-      // Prepare form data for API
-      const formData = new FormData();
-      formData.append("pdf", pdfFile);
-      formData.append("targetWeight", targetWeight);
-      formData.append("goal", goal);
-      formData.append("budget", budget);
-      formData.append("currency", currency);
-
-      // Add extractedData as JSON string
-      formData.append("extractedData", JSON.stringify(extractedData));
-
-      // Replace with your actual API endpoint
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://n8n.wolvesandcompany.in/webhook/gg-nutritional-calculator",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("API request failed");
@@ -183,7 +279,7 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
       case "uploading":
         return "Processing PDF...";
       case "success":
-        return "Data extracted successfully!";
+        return "PDF uploaded successfully!";
       case "error":
         return "Processing failed";
       default:
@@ -277,56 +373,163 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
             </div>
           </div>
 
-          {/* New Inputs for Target Weight, Goal, and Budget */}
+          {/* User Inputs for Plan Generation */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="target-weight">Target Weight</Label>
+              <Label htmlFor="name">Name *</Label>
               <Input
-                id="target-weight"
-                type="number"
-                placeholder="e.g. 75"
-                value={targetWeight}
-                onChange={(e) => setTargetWeight(e.target.value)}
-                min={1}
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
               />
             </div>
             <div>
-              <Label htmlFor="goal">Fitness Goal *</Label>
-              <Select value={goal} onValueChange={setGoal}>
+              <Label htmlFor="age">Age *</Label>
+              <Input
+                id="age"
+                type="number"
+                placeholder="e.g. 28"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                min={10}
+                max={100}
+              />
+            </div>
+            <div>
+              <Label htmlFor="gender">Gender *</Label>
+              <Select
+                value={gender}
+                onValueChange={(v) => setGender(v as Gender)}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select your goal" />
+                  <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weight-loss">Weight Loss</SelectItem>
-                  <SelectItem value="muscle-gain">Muscle Gain</SelectItem>
-                  <SelectItem value="toning">Toning</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="endurance">Endurance</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="budget">Monthly Budget</Label>
-              <div className="flex gap-2">
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="INR">INR</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  id="budget"
-                  type="number"
-                  placeholder="100"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  min={0}
-                />
-              </div>
+              <Label htmlFor="goal">Fitness Goal *</Label>
+              <Select value={goal} onValueChange={(v) => setGoal(v as Goal)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weight_loss">Weight Loss</SelectItem>
+                  <SelectItem value="muscle_gain">Muscle Gain</SelectItem>
+                  <SelectItem value="maintain_fitness">
+                    Maintain Fitness
+                  </SelectItem>
+                  <SelectItem value="improve_stamina">
+                    Improve Stamina
+                  </SelectItem>
+                  <SelectItem value="improve_flexibility">
+                    Improve Flexibility
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="diet-preference">Diet Preference *</Label>
+              <Select
+                value={dietPreference}
+                onValueChange={(v) => setDietPreference(v as DietPreference)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select diet" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                  <SelectItem value="non_vegetarian">Non-Vegetarian</SelectItem>
+                  <SelectItem value="vegan">Vegan</SelectItem>
+                  <SelectItem value="eggetarian">Eggetarian</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="allergies">Allergies (comma separated)</Label>
+              <Input
+                id="allergies"
+                type="text"
+                placeholder="e.g. peanuts, gluten"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="target-duration">
+                Target Duration (months) *
+              </Label>
+              <Input
+                id="target-duration"
+                type="number"
+                placeholder="e.g. 3"
+                value={targetDurationMonths}
+                onChange={(e) => setTargetDurationMonths(e.target.value)}
+                min={1}
+                max={6}
+              />
+            </div>
+            <div>
+              <Label htmlFor="monthly-budget">Monthly Budget (INR) *</Label>
+              <Input
+                id="monthly-budget"
+                type="number"
+                placeholder="e.g. 5000"
+                value={monthlyBudgetInr}
+                onChange={(e) => setMonthlyBudgetInr(e.target.value)}
+                min={0}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="preferred-workout-time">
+                Preferred Workout Time *
+              </Label>
+              <Select
+                value={preferredWorkoutTime}
+                onValueChange={(v) => setPreferredWorkoutTime(v as WorkoutTime)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">Morning</SelectItem>
+                  <SelectItem value="afternoon">Afternoon</SelectItem>
+                  <SelectItem value="evening">Evening</SelectItem>
+                  <SelectItem value="night">Night</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="workout-days">Workout Days/Week *</Label>
+              <Input
+                id="workout-days"
+                type="number"
+                placeholder="e.g. 5"
+                value={workoutDaysPerWeek}
+                onChange={(e) => setWorkoutDaysPerWeek(e.target.value)}
+                min={1}
+                max={7}
+              />
+            </div>
+            <div>
+              <Label htmlFor="health-conditions">
+                Health Conditions (comma separated)
+              </Label>
+              <Input
+                id="health-conditions"
+                type="text"
+                placeholder="e.g. diabetes, hypertension"
+                value={healthConditions}
+                onChange={(e) => setHealthConditions(e.target.value)}
+              />
             </div>
           </div>
 
