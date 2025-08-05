@@ -99,7 +99,7 @@ export const ViewFitnessGoal: React.FC<{
 
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-grow space-y-6">
+      <main className="flex-grow space-y-6 px-4 py-6 md:px-8 md:py-8">
         {/* Summary Section */}
         <div className="bg-gradient-hero text-white p-6 rounded-lg shadow-fitness">
           <div className="flex items-center gap-3 mb-4">
