@@ -20,7 +20,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useData } from "@/hooks/get-fitness-data"; // <-- import your context
 
-// Simple Modal implementation
+// Enhanced Modal implementation with improved width and UI
 const Modal: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -29,15 +29,48 @@ const Modal: React.FC<{
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-colors"
       onClick={onClose}
+      aria-modal="true"
+      role="dialog"
     >
       <div
-        className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw]"
+        className="bg-white rounded-2xl shadow-2xl p-8 min-w-[380px] max-w-[480px] w-full mx-4 relative animate-fadeIn"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close button in top-right */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 transition-colors rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-primary"
+          aria-label="Close"
+          type="button"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M6 6L14 14M14 6L6 14"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
         {children}
       </div>
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease;
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { Activity, Target, Calendar, TrendingUp } from "lucide-react";
-import Footer from "./Footer";
 
 // Types for plan data
 type Exercise = {
@@ -48,7 +47,6 @@ export const ViewFitnessGoal: React.FC<{
             Loading your plan...
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -79,7 +77,6 @@ export const ViewFitnessGoal: React.FC<{
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -92,7 +89,6 @@ export const ViewFitnessGoal: React.FC<{
             No plan data found.
           </div>
         </main>
-        <Footer />
       </div>
     );
   }

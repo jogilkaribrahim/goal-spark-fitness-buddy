@@ -5,7 +5,6 @@ import { ManualInput } from "@/components/ManualInput";
 import { FitnessGoalGenerator } from "@/components/FitnessGoalGenerator";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/fitness-hero.jpg";
-import Footer from "@/components/Footer";
 import Cal, { getCalApi } from "@calcom/embed-react";
 
 const Index = () => {
@@ -259,7 +258,6 @@ const Index = () => {
           )} */}
         </div>
       </div>
-      <Footer />
     </div>
   );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { Activity, Target, Calendar, TrendingUp } from "lucide-react";
-import Footer from "./Footer";
 import { useData } from "@/hooks/get-fitness-data";
 import { generatePDF } from "../lib/pdfGenerator";
 
@@ -82,7 +81,6 @@ export const FitnessGoalGenerator: React.FC = () => {
             Loading your plan...
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -268,7 +266,6 @@ export const FitnessGoalGenerator: React.FC = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
