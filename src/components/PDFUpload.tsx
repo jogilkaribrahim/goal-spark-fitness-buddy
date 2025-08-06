@@ -19,6 +19,27 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 
+// Modal UI (simple implementation, replace with your Modal component if needed)
+const Modal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}> = ({ open, onClose, children }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-full">
+        {children}
+        <div className="flex justify-end mt-4">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface PDFUploadProps {
   onDataExtracted: (data: unknown) => void;
   onUploadStart: () => void;
@@ -75,6 +96,13 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
   const [monthlyBudgetInr, setMonthlyBudgetInr] = useState<string>("");
 
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  // Modal state for contact details
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [isContactSubmitting, setIsContactSubmitting] = useState(false);
 
   // Refs for file input
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -142,6 +170,7 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
     }
   };
 
+  // Instead of calling API directly, open modal for contact details
   const handleGenerate = async () => {
     // Validate all required fields
     if (
@@ -193,7 +222,25 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
       return;
     }
 
-    setIsGenerating(true);
+    // Open contact modal
+    setShowContactModal(true);
+  };
+
+  // API call on modal submit
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Simple validation
+    if (!contactName || !contactEmail || !contactPhone) {
+      toast({
+        title: "Contact details required",
+        description: "Please fill in your name, email, and phone.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsContactSubmitting(true);
 
     // Prepare allergies and health_conditions as arrays
     const allergiesArr = allergies
@@ -211,16 +258,21 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
       pdf_content: pdfContent,
       user: {
         name,
-        age: ageNum,
+        age: parseInt(age, 10),
         gender,
         goal,
         diet_preference: dietPreference,
         allergies: allergiesArr,
         health_conditions: healthConditionsArr,
         preferred_workout_time: preferredWorkoutTime,
-        workout_days_per_week: workoutDaysNum,
-        target_duration_months: durationNum,
-        monthly_budget_inr: budgetNum,
+        workout_days_per_week: parseInt(workoutDaysPerWeek, 10),
+        target_duration_months: parseInt(targetDurationMonths, 10),
+        monthly_budget_inr: parseInt(monthlyBudgetInr, 10),
+      },
+      contact: {
+        name: contactName,
+        email: contactEmail,
+        phone: contactPhone,
       },
     };
 
@@ -247,6 +299,10 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
         title: "Plan generated!",
         description: "Your personalized plan has been created.",
       });
+      setShowContactModal(false);
+      setContactName("");
+      setContactEmail("");
+      setContactPhone("");
     } catch (error) {
       toast({
         title: "Generation failed",
@@ -255,7 +311,7 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setIsContactSubmitting(false);
     }
   };
 
@@ -303,253 +359,314 @@ export const PDFUpload: React.FC<PDFUploadProps> = ({
   };
 
   return (
-    <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary" />
-          BMI Report Upload
-        </CardTitle>
-        <CardDescription>
-          Upload your BMI report PDF to automatically extract your health data
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <div className="flex flex-col items-center space-y-4">
-              {getStatusIcon()}
-              <div>
-                <p className="text-lg font-medium">{getStatusText()}</p>
-                {fileName && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {fileName}
-                  </p>
+    <>
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            BMI Report Upload
+          </CardTitle>
+          <CardDescription>
+            Upload your BMI report PDF to automatically extract your health data
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <div className="flex flex-col items-center space-y-4">
+                {getStatusIcon()}
+                <div>
+                  <p className="text-lg font-medium">{getStatusText()}</p>
+                  {fileName && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {fileName}
+                    </p>
+                  )}
+                </div>
+
+                {uploadStatus === "idle" && (
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="pdf-upload"
+                    />
+                    <Button
+                      variant="fitness"
+                      size="lg"
+                      className="cursor-pointer"
+                      type="button"
+                      onClick={handleChooseFileClick}
+                    >
+                      Choose PDF File
+                    </Button>
+                  </div>
+                )}
+
+                {uploadStatus === "error" && (
+                  <div>
+                    <input
+                      ref={retryInputRef}
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="pdf-retry"
+                    />
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="cursor-pointer"
+                      type="button"
+                      onClick={handleRetryFileClick}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
                 )}
               </div>
+            </div>
 
-              {uploadStatus === "idle" && (
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="pdf-upload"
-                  />
-                  <Button
-                    variant="fitness"
-                    size="lg"
-                    className="cursor-pointer"
-                    type="button"
-                    onClick={handleChooseFileClick}
-                  >
-                    Choose PDF File
-                  </Button>
-                </div>
-              )}
+            {/* User Inputs for Plan Generation */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="age">Age *</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  placeholder="e.g. 28"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  min={10}
+                  max={100}
+                />
+              </div>
+              <div>
+                <Label htmlFor="gender">Gender *</Label>
+                <Select
+                  value={gender}
+                  onValueChange={(v) => setGender(v as Gender)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="goal">Fitness Goal *</Label>
+                <Select value={goal} onValueChange={(v) => setGoal(v as Goal)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your goal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weight_loss">Weight Loss</SelectItem>
+                    <SelectItem value="muscle_gain">Muscle Gain</SelectItem>
+                    <SelectItem value="maintain_fitness">
+                      Maintain Fitness
+                    </SelectItem>
+                    <SelectItem value="improve_stamina">
+                      Improve Stamina
+                    </SelectItem>
+                    <SelectItem value="improve_flexibility">
+                      Improve Flexibility
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="diet-preference">Diet Preference *</Label>
+                <Select
+                  value={dietPreference}
+                  onValueChange={(v) => setDietPreference(v as DietPreference)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select diet" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                    <SelectItem value="non_vegetarian">
+                      Non-Vegetarian
+                    </SelectItem>
+                    <SelectItem value="vegan">Vegan</SelectItem>
+                    <SelectItem value="eggetarian">Eggetarian</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="allergies">Allergies (comma separated)</Label>
+                <Input
+                  id="allergies"
+                  type="text"
+                  placeholder="e.g. peanuts, gluten"
+                  value={allergies}
+                  onChange={(e) => setAllergies(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="target-duration">
+                  Target Duration (months) *
+                </Label>
+                <Input
+                  id="target-duration"
+                  type="number"
+                  placeholder="e.g. 3"
+                  value={targetDurationMonths}
+                  onChange={(e) => setTargetDurationMonths(e.target.value)}
+                  min={1}
+                  max={6}
+                />
+              </div>
+              <div>
+                <Label htmlFor="monthly-budget">Monthly Budget (INR) *</Label>
+                <Input
+                  id="monthly-budget"
+                  type="number"
+                  placeholder="e.g. 5000"
+                  value={monthlyBudgetInr}
+                  onChange={(e) => setMonthlyBudgetInr(e.target.value)}
+                  min={0}
+                />
+              </div>
 
-              {uploadStatus === "error" && (
-                <div>
-                  <input
-                    ref={retryInputRef}
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="pdf-retry"
-                  />
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="cursor-pointer"
-                    type="button"
-                    onClick={handleRetryFileClick}
-                  >
-                    Try Again
-                  </Button>
-                </div>
-              )}
+              <div>
+                <Label htmlFor="preferred-workout-time">
+                  Preferred Workout Time *
+                </Label>
+                <Select
+                  value={preferredWorkoutTime}
+                  onValueChange={(v) =>
+                    setPreferredWorkoutTime(v as WorkoutTime)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="morning">Morning</SelectItem>
+                    <SelectItem value="afternoon">Afternoon</SelectItem>
+                    <SelectItem value="evening">Evening</SelectItem>
+                    <SelectItem value="night">Night</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="workout-days">Workout Days/Week *</Label>
+                <Input
+                  id="workout-days"
+                  type="number"
+                  placeholder="e.g. 5"
+                  value={workoutDaysPerWeek}
+                  onChange={(e) => setWorkoutDaysPerWeek(e.target.value)}
+                  min={1}
+                  max={7}
+                />
+              </div>
+              <div>
+                <Label htmlFor="health-conditions">
+                  Health Conditions (comma separated)
+                </Label>
+                <Input
+                  id="health-conditions"
+                  type="text"
+                  placeholder="e.g. diabetes, hypertension"
+                  value={healthConditions}
+                  onChange={(e) => setHealthConditions(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="fitness"
+                size="lg"
+                className="mt-4"
+                onClick={handleGenerate}
+                disabled={uploadStatus !== "success" || isGenerating}
+              >
+                {isGenerating ? "Generating..." : "Generate"}
+              </Button>
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              Supported formats: PDF • Max size: 10MB
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* User Inputs for Plan Generation */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="name">Name *</Label>
+      {/* Contact Details Modal */}
+      <Modal open={showContactModal} onClose={() => setShowContactModal(false)}>
+        <form onSubmit={handleContactSubmit}>
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Contact Details</h2>
+            <div className="mb-2">
+              <Label htmlFor="contact-name">Name *</Label>
               <Input
-                id="name"
+                id="contact-name"
                 type="text"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
                 placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 autoComplete="name"
+                required
               />
             </div>
-            <div>
-              <Label htmlFor="age">Age *</Label>
+            <div className="mb-2">
+              <Label htmlFor="contact-email">Email *</Label>
               <Input
-                id="age"
-                type="number"
-                placeholder="e.g. 28"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                min={10}
-                max={100}
+                id="contact-email"
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
               />
             </div>
-            <div>
-              <Label htmlFor="gender">Gender *</Label>
-              <Select
-                value={gender}
-                onValueChange={(v) => setGender(v as Gender)}
+            <div className="mb-2">
+              <Label htmlFor="contact-phone">Phone *</Label>
+              <Input
+                id="contact-phone"
+                type="tel"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder="Your phone number"
+                autoComplete="tel"
+                required
+              />
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button
+                type="submit"
+                variant="fitness"
+                size="lg"
+                disabled={isContactSubmitting}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="goal">Fitness Goal *</Label>
-              <Select value={goal} onValueChange={(v) => setGoal(v as Goal)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your goal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="weight_loss">Weight Loss</SelectItem>
-                  <SelectItem value="muscle_gain">Muscle Gain</SelectItem>
-                  <SelectItem value="maintain_fitness">
-                    Maintain Fitness
-                  </SelectItem>
-                  <SelectItem value="improve_stamina">
-                    Improve Stamina
-                  </SelectItem>
-                  <SelectItem value="improve_flexibility">
-                    Improve Flexibility
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="diet-preference">Diet Preference *</Label>
-              <Select
-                value={dietPreference}
-                onValueChange={(v) => setDietPreference(v as DietPreference)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select diet" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vegetarian">Vegetarian</SelectItem>
-                  <SelectItem value="non_vegetarian">Non-Vegetarian</SelectItem>
-                  <SelectItem value="vegan">Vegan</SelectItem>
-                  <SelectItem value="eggetarian">Eggetarian</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="allergies">Allergies (comma separated)</Label>
-              <Input
-                id="allergies"
-                type="text"
-                placeholder="e.g. peanuts, gluten"
-                value={allergies}
-                onChange={(e) => setAllergies(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="target-duration">
-                Target Duration (months) *
-              </Label>
-              <Input
-                id="target-duration"
-                type="number"
-                placeholder="e.g. 3"
-                value={targetDurationMonths}
-                onChange={(e) => setTargetDurationMonths(e.target.value)}
-                min={1}
-                max={6}
-              />
-            </div>
-            <div>
-              <Label htmlFor="monthly-budget">Monthly Budget (INR) *</Label>
-              <Input
-                id="monthly-budget"
-                type="number"
-                placeholder="e.g. 5000"
-                value={monthlyBudgetInr}
-                onChange={(e) => setMonthlyBudgetInr(e.target.value)}
-                min={0}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="preferred-workout-time">
-                Preferred Workout Time *
-              </Label>
-              <Select
-                value={preferredWorkoutTime}
-                onValueChange={(v) => setPreferredWorkoutTime(v as WorkoutTime)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="morning">Morning</SelectItem>
-                  <SelectItem value="afternoon">Afternoon</SelectItem>
-                  <SelectItem value="evening">Evening</SelectItem>
-                  <SelectItem value="night">Night</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="workout-days">Workout Days/Week *</Label>
-              <Input
-                id="workout-days"
-                type="number"
-                placeholder="e.g. 5"
-                value={workoutDaysPerWeek}
-                onChange={(e) => setWorkoutDaysPerWeek(e.target.value)}
-                min={1}
-                max={7}
-              />
-            </div>
-            <div>
-              <Label htmlFor="health-conditions">
-                Health Conditions (comma separated)
-              </Label>
-              <Input
-                id="health-conditions"
-                type="text"
-                placeholder="e.g. diabetes, hypertension"
-                value={healthConditions}
-                onChange={(e) => setHealthConditions(e.target.value)}
-              />
+                {isContactSubmitting ? "Submitting..." : "Submit & Generate"}
+              </Button>
             </div>
           </div>
-
-          <div className="flex justify-end">
-            <Button
-              variant="fitness"
-              size="lg"
-              className="mt-4"
-              onClick={handleGenerate}
-              disabled={uploadStatus !== "success" || isGenerating}
-            >
-              {isGenerating ? "Generating..." : "Generate"}
-            </Button>
-          </div>
-
-          <div className="text-xs text-muted-foreground">
-            Supported formats: PDF • Max size: 10MB
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </form>
+      </Modal>
+    </>
   );
 };

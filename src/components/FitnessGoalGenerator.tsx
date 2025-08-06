@@ -41,18 +41,20 @@ export const FitnessGoalGenerator: React.FC = () => {
   // Defensive checks for data structure
   let planData: PlanData | null = null;
 
-  // The API response structure is: data.data.diet_plan, data.data.workout_plan, data.data.summary
+  // Check if data and data.data exist and have the required properties
   if (
     data &&
     data.data &&
-    typeof data.data.summary === "string" &&
-    Array.isArray(data.data.workout_plan) &&
-    Array.isArray(data.data.diet_plan)
+    typeof data.data === "object" &&
+    data.data !== null &&
+    typeof data.data.summary === "string"
   ) {
     planData = {
       summary: data.data.summary,
-      workout_plan: data.data.workout_plan,
-      diet_plan: data.data.diet_plan,
+      workout_plan: Array.isArray(data.data.workout_plan)
+        ? data.data.workout_plan
+        : [],
+      diet_plan: Array.isArray(data.data.diet_plan) ? data.data.diet_plan : [],
     };
   }
 
@@ -64,27 +66,6 @@ export const FitnessGoalGenerator: React.FC = () => {
     Array.isArray(planData.diet_plan) &&
     planData.diet_plan.length > 0;
 
-  const DownloadButton: React.FC<{ planData: PlanData }> = ({ planData }) => (
-    <button
-      onClick={() => generatePDF(planData)}
-      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-    >
-      Download Plan PDF
-    </button>
-  );
-
-  if (!planData) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-lg text-muted-foreground">
-            Loading your plan...
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-grow space-y-6">
@@ -94,7 +75,11 @@ export const FitnessGoalGenerator: React.FC = () => {
             <TrendingUp className="w-6 h-6" />
             <h2 className="text-2xl font-bold">Your Fitness Journey</h2>
           </div>
-          <p className="text-lg leading-relaxed">{planData.summary}</p>
+          {planData && planData.summary ? (
+            <p className="text-lg leading-relaxed">{planData.summary}</p>
+          ) : (
+            <span className="italic text-muted-foreground">No Summary</span>
+          )}
         </div>
 
         {/* LOCKED SECTION (blurred when plan details are not present) */}
@@ -116,32 +101,47 @@ export const FitnessGoalGenerator: React.FC = () => {
                 </div>
                 <div className="text-muted-foreground">
                   <ul className="space-y-3">
-                    {planData.workout_plan.map((day) => (
-                      <li key={day.day}>
-                        {day.exercises && day.exercises.length > 0 && (
-                          <span className="font-semibold text-primary">
-                            {day.day}:
-                          </span>
-                        )}
-                        <ul className="ml-4 mt-1 space-y-1">
-                          {day.exercises &&
-                            day.exercises.map((ex, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <span className="inline-block w-2 h-2 mt-2 bg-primary rounded-full" />
-                                <span>
-                                  <span className="font-medium">{ex.name}</span>
-                                  {ex.repetitions &&
-                                    ex.repetitions !== "N/A" && (
-                                      <span className="ml-2 text-xs text-muted-foreground">
-                                        ({ex.repetitions})
-                                      </span>
-                                    )}
-                                </span>
-                              </li>
-                            ))}
-                        </ul>
+                    {planData &&
+                    Array.isArray(planData.workout_plan) &&
+                    planData.workout_plan.length > 0 ? (
+                      planData.workout_plan.map((day) => (
+                        <li key={day.day}>
+                          {Array.isArray(day.exercises) &&
+                            day.exercises.length > 0 && (
+                              <span className="font-semibold text-primary">
+                                {day.day}:
+                              </span>
+                            )}
+                          <ul className="ml-4 mt-1 space-y-1">
+                            {Array.isArray(day.exercises) &&
+                              day.exercises.map((ex, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <span className="inline-block w-2 h-2 mt-2 bg-primary rounded-full" />
+                                  <span>
+                                    <span className="font-medium">
+                                      {ex.name || (
+                                        <span className="italic text-muted-foreground">
+                                          No Name
+                                        </span>
+                                      )}
+                                    </span>
+                                    {ex.repetitions &&
+                                      ex.repetitions !== "N/A" && (
+                                        <span className="ml-2 text-xs text-muted-foreground">
+                                          ({ex.repetitions})
+                                        </span>
+                                      )}
+                                  </span>
+                                </li>
+                              ))}
+                          </ul>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="italic text-muted-foreground">
+                        No workout plan available.
                       </li>
-                    ))}
+                    )}
                   </ul>
                 </div>
               </div>
@@ -178,35 +178,66 @@ export const FitnessGoalGenerator: React.FC = () => {
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {planData.diet_plan.map((day, idx) => (
-                        <tr
-                          key={day.day}
-                          className={`transition-colors duration-150 ${
-                            idx % 2 === 1 ? "bg-muted/30" : ""
-                          } hover:bg-primary/10`}
-                        >
-                          <td className="p-2 border-b border-border font-semibold whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1">
-                              <span className="inline-block w-2 h-2 rounded-full bg-primary" />
-                              {day.day}
-                            </span>
-                          </td>
-                          <td className="p-2 border-b border-border max-w-xs text-primary font-medium">
-                            {day.meals?.breakfast || ""}
-                          </td>
-                          <td className="p-2 border-b border-border max-w-xs text-green-700 font-medium">
-                            {day.meals?.lunch || ""}
-                          </td>
-                          <td className="p-2 border-b border-border max-w-xs text-yellow-700 font-medium">
-                            {day.meals?.snacks || ""}
-                          </td>
-                          <td className="p-2 border-b border-border max-w-xs text-blue-700 font-medium">
-                            {day.meals?.dinner || ""}
+                    {planData &&
+                    Array.isArray(planData.diet_plan) &&
+                    planData.diet_plan.length > 0 ? (
+                      <tbody>
+                        {planData.diet_plan.map((day, idx) => (
+                          <tr
+                            key={day.day}
+                            className={`transition-colors duration-150 ${
+                              idx % 2 === 1 ? "bg-muted/30" : ""
+                            } hover:bg-primary/10`}
+                          >
+                            <td className="p-2 border-b border-border font-semibold whitespace-nowrap">
+                              <span className="inline-flex items-center gap-1">
+                                <span className="inline-block w-2 h-2 rounded-full bg-primary" />
+                                {day.day}
+                              </span>
+                            </td>
+                            <td className="p-2 border-b border-border max-w-xs text-primary font-medium">
+                              {day.meals?.breakfast || (
+                                <span className="italic text-muted-foreground">
+                                  -
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2 border-b border-border max-w-xs text-green-700 font-medium">
+                              {day.meals?.lunch || (
+                                <span className="italic text-muted-foreground">
+                                  -
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2 border-b border-border max-w-xs text-yellow-700 font-medium">
+                              {day.meals?.snacks || (
+                                <span className="italic text-muted-foreground">
+                                  -
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2 border-b border-border max-w-xs text-blue-700 font-medium">
+                              {day.meals?.dinner || (
+                                <span className="italic text-muted-foreground">
+                                  -
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    ) : (
+                      <tbody>
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="text-center italic text-muted-foreground p-4"
+                          >
+                            No diet plan available.
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
+                      </tbody>
+                    )}
                   </table>
                 </div>
               </div>
@@ -220,39 +251,53 @@ export const FitnessGoalGenerator: React.FC = () => {
                   Weekly Workout Breakdown
                 </h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {planData.workout_plan.map(
-                  (day) =>
-                    day.exercises &&
-                    day.exercises.length > 0 && (
-                      <div
-                        key={day.day}
-                        className="border border-border p-4 rounded-lg"
-                      >
-                        <h4 className="font-semibold text-primary mb-2">
-                          {day.day}
-                        </h4>
-                        <ul className="space-y-1 text-sm">
-                          {day.exercises.map((ex, i) => (
-                            <li key={i}>
-                              <span className="font-medium">{ex.name}</span>
-                              {ex.repetitions && ex.repetitions !== "N/A" && (
-                                <span className="ml-2 text-xs text-muted-foreground">
-                                  ({ex.repetitions})
+              {planData &&
+              Array.isArray(planData.workout_plan) &&
+              planData.workout_plan.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {planData.workout_plan.map(
+                    (day) =>
+                      Array.isArray(day.exercises) &&
+                      day.exercises.length > 0 && (
+                        <div
+                          key={day.day}
+                          className="border border-border p-4 rounded-lg"
+                        >
+                          <h4 className="font-semibold text-primary mb-2">
+                            {day.day}
+                          </h4>
+                          <ul className="space-y-1 text-sm">
+                            {day.exercises.map((ex, i) => (
+                              <li key={i}>
+                                <span className="font-medium">
+                                  {ex.name || (
+                                    <span className="italic text-muted-foreground">
+                                      No Name
+                                    </span>
+                                  )}
                                 </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )
-                )}
-              </div>
+                                {ex.repetitions && ex.repetitions !== "N/A" && (
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({ex.repetitions})
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )
+                  )}
+                </div>
+              ) : (
+                <div className="italic text-muted-foreground">
+                  No weekly workout breakdown available.
+                </div>
+              )}
             </div>
           </div>
 
           {/* Overlay message and blur effect if plan details are not present */}
-          {hasPlanDetails && (
+          {!hasPlanDetails && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm rounded-lg z-20">
               <div className="absolute top-28">
                 <h2 className="text-xl font-semibold mb-2 ">

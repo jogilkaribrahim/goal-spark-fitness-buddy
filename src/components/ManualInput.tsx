@@ -701,7 +701,30 @@ export const ManualInput: React.FC<ManualInputProps> = ({
               Cancel
             </Button>
             <Button type="submit" variant="hero" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit & Generate"}
+              {isSubmitting ? (
+                <>
+                  <span className="inline-block mr-2 animate-spin">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-loader-2"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M22 12a10 10 0 0 1-10 10" />
+                    </svg>
+                  </span>
+                  Submitting...
+                </>
+              ) : (
+                "Submit & Generate"
+              )}
             </Button>
           </div>
         </form>
