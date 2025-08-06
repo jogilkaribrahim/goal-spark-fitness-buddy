@@ -115,7 +115,7 @@ export const ViewFitnessGoal: React.FC<{
           <div className="bg-card p-6 rounded-lg shadow-card">
             <div className="flex items-center gap-3 mb-4">
               <Activity className="w-5 h-5 text-primary" />
-              {/* <h3 className="text-xl font-semibold">Workout Plan (Weekly)</h3> */}
+              <h3 className="text-xl font-semibold">Workout Plan (Weekly)</h3>
             </div>
             <div className="text-muted-foreground">
               <ul className="space-y-3">
